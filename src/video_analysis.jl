@@ -204,27 +204,23 @@ function track_masses(video_path::String; max_frames::Int=2000, area_min::Float6
     L2_px = px_dist(m1, m2)
 
     # Print summary
-    println("\n" * "="^60)
-    println("VIDEO ANALYSIS - MARKERS DETECTION")
-    println("="^60)
+    println("# MARKERS DETECTION")
 
     println("## Pivot :")
-    println("  Position (fixed) = $(round.(pivot, digits=1))")
+    println("\tPosition (fixed) = $(round.(pivot, digits=1))")
 
     println("\n## Orange markers ($(length(centers)) found)")
     for (i, c) in enumerate(centers)
-        println("  Orange $i = $(round.(c, digits=1))")
+        println("\tOrange $i = $(round.(c, digits=1))")
     end
 
     println("\n## Identified markers")
-    println("  m1 (closer)  = $(round.(m1, digits=1))")
-    println("  m2 (farther) = $(round.(m2, digits=1))")
+    println("\tm1 (closer)  = $(round.(m1, digits=1))")
+    println("\tm2 (farther) = $(round.(m2, digits=1))")
 
     println("\n## Lengths")
-    println("  L1 (pivot → m1) = $(round(L1_px, digits=1)) px")
-    println("  L2 (m1 → m2)    = $(round(L2_px, digits=1)) px")
-
-    println("="^60 * "\n")
+    println("\tL1 (pivot → m1) = $(round(L1_px, digits=1)) px")
+    println("\tL2 (m1 → m2)    = $(round(L2_px, digits=1)) px")
 
     push!(pivot_hist, pivot)
     push!(m1_hist, m1)
@@ -399,6 +395,9 @@ function analyze_video(video_path::String;
     debug::Bool=true,
     angle_offset::Float64=0.0
 )
+    println("\n" * "="^60)
+    println("STARTING : VIDEO ANALYSIS\n")
+
     # Track masses
     pivot_pos, m1_pos, m2_pos, fps = track_masses(video_path; max_frames=max_frames, area_min=area_min, debug=debug)
     n = length(pivot_pos)
@@ -445,35 +444,34 @@ function analyze_video(video_path::String;
     rmse_θ2 = sqrt(sum(wrapdiff(θ2[i], sol_fit.u[i][2])^2 for i in 1:min(n_fit, length(sol_fit.u))) / min(n_fit, length(sol_fit.u)))
 
     # Print summary
-    println("\n" * "="^60)
-    println("VIDEO ANALYSIS - FINAL RESULTS")
-    println("="^60)
+    println("\n# FINAL RESULTS")
 
     println("## Physical params")
-    println("  L1 = $(round(L1*1000, digits=2)) mm")
-    println("  L2 = $(round(L2*1000, digits=2)) mm")
-    println("  m1 = $(round(m1*1000, digits=2)) g")
-    println("  m2 = $(round(m2*1000, digits=2)) g")
+    println("\tL1 = $(round(L1*1000, digits=2)) mm")
+    println("\tL2 = $(round(L2*1000, digits=2)) mm")
+    println("\tm1 = $(round(m1*1000, digits=2)) g")
+    println("\tm2 = $(round(m2*1000, digits=2)) g")
 
     println("\n## Initials conditions")
-    println("  θ1_0 = $(round(rad2deg(θ1_0), digits=2))°")
-    println("  θ2_0 = $(round(rad2deg(θ2_0), digits=2))°")
-    println("  ω1_0 = 0.0 rad/s")
-    println("  ω2_0 = 0.0 rad/s")
+    println("\tθ1_0 = $(round(rad2deg(θ1_0), digits=2))°")
+    println("\tθ2_0 = $(round(rad2deg(θ2_0), digits=2))°")
+    println("\tω1_0 = 0.0 rad/s")
+    println("\tω2_0 = 0.0 rad/s")
 
     println("\n## Quality estimation")
-    println("  Fit error     = $(round(err, sigdigits=4))")
-    println("  RMSE θ1       = $(round(rad2deg(rmse_θ1), digits=2))°")
-    println("  RMSE θ2       = $(round(rad2deg(rmse_θ2), digits=2))°")
-    println("  Fit duration  = $(fit_duration) s")
+    println("\tFit error     = $(round(err, sigdigits=4))")
+    println("\tRMSE θ1       = $(round(rad2deg(rmse_θ1), digits=2))°")
+    println("\tRMSE θ2       = $(round(rad2deg(rmse_θ2), digits=2))°")
+    println("\tFit duration  = $(fit_duration) s")
 
     println("\n## Meta datas")
-    println("  FPS           = $(round(fps, digits=1))")
-    println("  dt            = $(round(dt*1000, digits=2)) ms")
-    println("  Frames        = $(n)")
-    println("  Scale         = $(round(px_to_m*1000, digits=4)) mm/px")
+    println("\tFPS           = $(round(fps, digits=1))")
+    println("\tdt            = $(round(dt*1000, digits=2)) ms")
+    println("\tFrames        = $(n)")
+    println("\tScale         = $(round(px_to_m*1000, digits=4)) mm/px")
 
+    println("\nENDING : VIDEO ANALYSIS")
     println("="^60 * "\n")
 
-    return θ1_0, θ2_0, ω1_0, ω2_0, m1, m2, L1, L2
+    return VideoAnalysis(θ1_0, θ2_0, ω1_0, ω2_0, m1, m2, L1, L2, pivot_pos, m1_pos, m2_pos, fps, px_to_m)
 end

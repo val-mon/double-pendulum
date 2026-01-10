@@ -252,7 +252,8 @@ function launch_simulation(;
     tmax=2.0,
     dt=0.001
 )
-    println("INFO : starting simulation\n")
+    println("\n" * "="^60)
+    println("STARTING : FINAL SIMULATION\n")
 
     # define ODE (Ordinary Differential Equation) problem:
     #   - equations_of_motion : function f(du, u, p, t) that computes du/dt
@@ -282,6 +283,8 @@ function launch_simulation(;
     ΔE_max = maximum(abs.(pendulum.energy_history .- E0)) / abs(E0) * 100
     println("ΔE/E0 = $(ΔE_max) %")
 
-    println("\nINFO : simulation ended")
+    println("\nENDING : FINAL SIMULATION")
+    println("="^60 * "\n")
+    
     return pendulum
 end

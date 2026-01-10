@@ -46,6 +46,7 @@ function plot_pendulum(pendulum::DoublePendulum)
     display(gif(anim, "export/pendulum.gif"))
 end
 
+
 """
     plot_stats(pendulum)
 
@@ -71,4 +72,166 @@ function plot_stats(pendulum::DoublePendulum)
 
     savefig(graph, "export/stats.svg")
     display(graph)
+end
+
+
+"""
+    compare_video_simulation(video_analysis, pendulum)
+
+Compare the video tracking with the simulation results by generating:
+- Position comparison plots (x, y vs time for m1 and m2)
+
+# Arguments
+- `video_analysis::VideoAnalysis` : video analysis results with tracked positions
+- `pendulum::DoublePendulum` : simulation results to compare against
+
+# Output
+- Save figure to `export/comparison.svg`
+    - Displays the figure
+- Save video to `export/comparison.mp4`
+"""
+function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum)
+    # Extract data from video analysis
+    pivot_pos = video_analysis.pivot_pos
+    m1_pos = video_analysis.m1_pos
+    m2_pos = video_analysis.m2_pos
+    fps = video_analysis.fps
+    px_to_m = video_analysis.px_to_m
+
+    n = length(pivot_pos)
+    dt = 1.0 / fps
+
+    # Fixed pivot position (same as in track_masses)
+    pivot = (1883.0, 933.0)
+
+    # Determine common time range
+    t_max_video = (n - 1) * dt
+    t_max_sim = pendulum.time_history[end]
+    t_max = min(t_max_video, t_max_sim)
+
+    # Find how many video frames fit in the common time
+    n_video = Int(floor(t_max / dt)) + 1
+
+    # Video positions in meters (relative to pivot)
+    # Note: Y is inverted because image coordinates have Y increasing downward
+    video_m1_x_m = [(m1_pos[i][1] - pivot[1]) * px_to_m for i in 1:n_video]
+    video_m1_y_m = [-(m1_pos[i][2] - pivot[2]) * px_to_m for i in 1:n_video]
+    video_m2_x_m = [(m2_pos[i][1] - pivot[1]) * px_to_m for i in 1:n_video]
+    video_m2_y_m = [-(m2_pos[i][2] - pivot[2]) * px_to_m for i in 1:n_video]
+
+    # Time array for video
+    time_video = [(i-1) * dt for i in 1:n_video]
+
+    # Sample simulation at video timestamps (linear interpolation)
+    sim_m1_x_m = Float64[]
+    sim_m1_y_m = Float64[]
+    sim_m2_x_m = Float64[]
+    sim_m2_y_m = Float64[]
+
+    for t in time_video
+        # Find closest simulation time indices
+        idx = searchsortedfirst(pendulum.time_history, t)
+
+        if idx == 1
+            # Exact match at start
+            push!(sim_m1_x_m, pendulum.join1.position_x[1])
+            push!(sim_m1_y_m, pendulum.join1.position_y[1])
+            push!(sim_m2_x_m, pendulum.join2.position_x[1])
+            push!(sim_m2_y_m, pendulum.join2.position_y[1])
+        elseif idx > length(pendulum.time_history)
+            # Beyond simulation range, use last value
+            push!(sim_m1_x_m, pendulum.join1.position_x[end])
+            push!(sim_m1_y_m, pendulum.join1.position_y[end])
+            push!(sim_m2_x_m, pendulum.join2.position_x[end])
+            push!(sim_m2_y_m, pendulum.join2.position_y[end])
+        else
+            # Linear interpolation between idx-1 and idx
+            t1 = pendulum.time_history[idx-1]
+            t2 = pendulum.time_history[idx]
+            factor = (t - t1) / (t2 - t1)  # interpolation factor
+
+            push!(sim_m1_x_m, (1-factor) * pendulum.join1.position_x[idx-1] + factor * pendulum.join1.position_x[idx])
+            push!(sim_m1_y_m, (1-factor) * pendulum.join1.position_y[idx-1] + factor * pendulum.join1.position_y[idx])
+            push!(sim_m2_x_m, (1-factor) * pendulum.join2.position_x[idx-1] + factor * pendulum.join2.position_x[idx])
+            push!(sim_m2_y_m, (1-factor) * pendulum.join2.position_y[idx-1] + factor * pendulum.join2.position_y[idx])
+        end
+    end
+
+    # Generate position comparison plots
+    p1 = plot(time_video, video_m1_x_m .* 1000, label="Video m1", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="x position [mm]", title="m1 - X Position")
+    plot!(p1, time_video, sim_m1_x_m .* 1000, label="Simulation m1", linewidth=2, linestyle=:dash, color=:red)
+
+    p2 = plot(time_video, video_m1_y_m .* 1000, label="Video m1", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="y position [mm]", title="m1 - Y Position")
+    plot!(p2, time_video, sim_m1_y_m .* 1000, label="Simulation m1", linewidth=2, linestyle=:dash, color=:red)
+
+    p3 = plot(time_video, video_m2_x_m .* 1000, label="Video m2", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="x position [mm]", title="m2 - X Position")
+    plot!(p3, time_video, sim_m2_x_m .* 1000, label="Simulation m2", linewidth=2, linestyle=:dash, color=:red)
+
+    p4 = plot(time_video, video_m2_y_m .* 1000, label="Video m2", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="y position [mm]", title="m2 - Y Position")
+    plot!(p4, time_video, sim_m2_y_m .* 1000, label="Simulation m2", linewidth=2, linestyle=:dash, color=:red)
+
+    combined_plot = plot(p1, p2, p3, p4, layout=(2,2), size=(1000, 1000), plot_title="Video vs Simulation - Comparison")
+
+    savefig(combined_plot, "export/comparison.svg")
+    display(combined_plot)
+
+    # Generate animated comparison
+    L_total = pendulum.join1.length + pendulum.join2.length
+    anim = @animate for i in 1:n_video
+        t = time_video[i]
+
+        # Create plot
+        plot(
+            xlim=(-L_total * 1.2, L_total * 1.2),
+            ylim=(-L_total * 1.2, L_total * 1.2),
+            xlabel="x [m]",
+            ylabel="y [m]",
+            aspect_ratio=:equal,
+            title="t = $(round(t, digits=2)) s",
+            legend=:topright,
+            dpi=100,
+            size=(1920,1080),
+            margin = 20Plots.mm,
+            fontfamily="Computer Modern"
+        )
+
+        # Draw simulation pendulum (red)
+        plot!([0, sim_m1_x_m[i]], [0, sim_m1_y_m[i]], lw=3, color=:red, label="", alpha=0.8)
+        plot!([sim_m1_x_m[i], sim_m2_x_m[i]], [sim_m1_y_m[i], sim_m2_y_m[i]], lw=3, color=:darkred, label="", alpha=0.8)
+        scatter!([0], [0], ms=12, color=:black, label="Pivot")
+        scatter!([sim_m1_x_m[i]], [sim_m1_y_m[i]], ms=12, color=:red, label="Sim m1")
+        scatter!([sim_m2_x_m[i]], [sim_m2_y_m[i]], ms=12, color=:darkred, label="Sim m2")
+
+        # Draw video positions (blue)
+        scatter!([video_m1_x_m[i]], [video_m1_y_m[i]], ms=10, color=:blue, marker=:circle, markerstrokewidth=2, label="Video m1")
+        scatter!([video_m2_x_m[i]], [video_m2_y_m[i]], ms=10, color=:darkblue, marker=:circle, markerstrokewidth=2, label="Video m2")
+
+        # Add trajectory trace for m2
+        idx_start = max(1, i - 50)
+        plot!(sim_m2_x_m[idx_start:i], sim_m2_y_m[idx_start:i], alpha=0.3, color=:red, lw=1, label="")
+        plot!(video_m2_x_m[idx_start:i], video_m2_y_m[idx_start:i], alpha=0.3, color=:blue, lw=1, label="")
+    end every 1
+    mp4(anim, "export/comparison.mp4")
+end
+
+
+"""
+    plot_results(video_analysis, pendulum)
+
+Run all ploting functions
+
+# Arguments
+- `video_analysis::VideoAnalysis` : video analysis results with tracked positions
+- `pendulum::DoublePendulum` : simulation results to compare against
+"""
+function plot_results(video_analysis::VideoAnalysis, pendulum::DoublePendulum)
+    println("\n" * "="^60)
+    println("STARTING : PLOTING\n")
+
+    plot_stats(pendulum)
+    plot_pendulum(pendulum)
+    plot_comparison(video_analysis, pendulum)
+
+    println("\nENDING : PLOTING")
+    println("="^60 * "\n")
 end
