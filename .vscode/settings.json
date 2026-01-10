@@ -1,4 +1,5 @@
 {
+  "julia.executablePath": "/Users/mov/.julia/juliaup/julia-1.9.4+0.aarch64.apple.darwin14/bin/julia",
   "julia.environmentPath": "${workspaceFolder}",
   "terminal.integrated.env.osx": {
     "JULIA_PROJECT": "@."
