@@ -8,6 +8,10 @@ Initial parameters (angles, masses, lengths) are extracted from video analysis b
 ├── bin/
 │   └── main.jl                 # entry point
 │
+├── doc/                        # theory
+│   ├── lagrange.pdf
+│   └── lagrange.tex
+│
 ├── src/
 │   ├── Pendulum.jl             # main module
 │   ├── physics.jl              # physical constants
