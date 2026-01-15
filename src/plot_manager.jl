@@ -22,7 +22,8 @@ function plot_pendulum(pendulum::DoublePendulum)
             ylabel="y [m]",
             aspect_ratio=:equal,
             legend=false,
-            title="$(round(pendulum.time_history[i], digits=1)) s",
+            title="$(round(pendulum.time_history[i], digits=1)) [s]",
+            margin = 10Plots.mm,
             size=(1000, 1000)
         )
 
@@ -65,10 +66,10 @@ function plot_stats(pendulum::DoublePendulum)
 
     p1 = plot(time, [pendulum.join1.θ_history pendulum.join2.θ_history], label=["θ₁" "θ₂"], color=[:blue :red], xlabel="t [s]", ylabel="θ [rad]", title="angles")
     p2 = plot(time, [pendulum.join1.ω_history pendulum.join2.ω_history], label=["ω₁" "ω₂"], color=[:blue :red], xlabel="t [s]", ylabel="ω [rad/s]", title="angular velocities")
-    p3 = plot(pendulum.join2.position_x, pendulum.join2.position_y, color=:red, xlabel="x [m]", ylabel="y [m]", title="m2 trajectory", legend=false)
+    p3 = plot(pendulum.join2.position_x .* 1000, pendulum.join2.position_y .* 1000, color=:red, xlabel="x [mm]", ylabel="y [mm]", title="m2 trajectory", legend=false)
     p4 = plot(time, (pendulum.energy_history .- E0) ./ abs(E0) .* 100, color=:green, xlabel="t [s]", ylabel="ΔE/E0 [%]", title="energy conservation", legend=false, ylim=(-0.0001, 0.0001))
 
-    graph = plot(p1, p2, p3, p4, layout=(2, 2), size=(1000, 1000))
+    graph = plot(p1, p2, p3, p4, layout=(2, 2), size=(1000, 1000), margin = 10Plots.mm)
 
     savefig(graph, "export/stats.svg")
     display(graph)
@@ -158,20 +159,19 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
     end
 
     # Generate position comparison plots
-    p1 = plot(time_video, video_m1_x_m .* 1000, label="Video m1", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="x position [mm]", title="m1 - X Position")
-    plot!(p1, time_video, sim_m1_x_m .* 1000, label="Simulation m1", linewidth=2, linestyle=:dash, color=:red)
+    p1 = plot(time_video, video_m1_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m1 - x position")
+    plot!(p1, time_video, sim_m1_x_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p2 = plot(time_video, video_m1_y_m .* 1000, label="Video m1", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="y position [mm]", title="m1 - Y Position")
-    plot!(p2, time_video, sim_m1_y_m .* 1000, label="Simulation m1", linewidth=2, linestyle=:dash, color=:red)
+    p2 = plot(time_video, video_m1_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m1 - y position")
+    plot!(p2, time_video, sim_m1_y_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p3 = plot(time_video, video_m2_x_m .* 1000, label="Video m2", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="x position [mm]", title="m2 - X Position")
-    plot!(p3, time_video, sim_m2_x_m .* 1000, label="Simulation m2", linewidth=2, linestyle=:dash, color=:red)
+    p3 = plot(time_video, video_m2_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m2 - x position")
+    plot!(p3, time_video, sim_m2_x_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p4 = plot(time_video, video_m2_y_m .* 1000, label="Video m2", linewidth=2, linestyle=:solid, color=:blue,xlabel="Time [s]", ylabel="y position [mm]", title="m2 - Y Position")
-    plot!(p4, time_video, sim_m2_y_m .* 1000, label="Simulation m2", linewidth=2, linestyle=:dash, color=:red)
+    p4 = plot(time_video, video_m2_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m2 - y position")
+    plot!(p4, time_video, sim_m2_y_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    combined_plot = plot(p1, p2, p3, p4, layout=(2,2), size=(1000, 1000), plot_title="Video vs Simulation - Comparison")
-
+    combined_plot = plot(p1, p2, p3, p4, layout=(2,2), size=(1000, 1000), margin = 10Plots.mm, plot_title="video vs simulation")
     savefig(combined_plot, "export/comparison.svg")
     display(combined_plot)
 
@@ -187,24 +187,23 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
             xlabel="x [m]",
             ylabel="y [m]",
             aspect_ratio=:equal,
-            title="t = $(round(t, digits=2)) s",
+            title="t = $(round(t, digits=2)) [s]",
             legend=:topright,
             dpi=100,
             size=(1920,1080),
-            margin = 20Plots.mm,
-            fontfamily="Computer Modern"
+            margin = 10Plots.mm
         )
 
         # Draw simulation pendulum (red)
         plot!([0, sim_m1_x_m[i]], [0, sim_m1_y_m[i]], lw=3, color=:red, label="", alpha=0.8)
         plot!([sim_m1_x_m[i], sim_m2_x_m[i]], [sim_m1_y_m[i], sim_m2_y_m[i]], lw=3, color=:darkred, label="", alpha=0.8)
-        scatter!([0], [0], ms=12, color=:black, label="Pivot")
-        scatter!([sim_m1_x_m[i]], [sim_m1_y_m[i]], ms=12, color=:red, label="Sim m1")
-        scatter!([sim_m2_x_m[i]], [sim_m2_y_m[i]], ms=12, color=:darkred, label="Sim m2")
+        scatter!([0], [0], ms=12, color=:black, label = false)
+        scatter!([sim_m1_x_m[i]], [sim_m1_y_m[i]], ms=12, color=:red, label="simu m1")
+        scatter!([sim_m2_x_m[i]], [sim_m2_y_m[i]], ms=12, color=:darkred, label="simu m2")
 
         # Draw video positions (blue)
-        scatter!([video_m1_x_m[i]], [video_m1_y_m[i]], ms=10, color=:blue, marker=:circle, markerstrokewidth=2, label="Video m1")
-        scatter!([video_m2_x_m[i]], [video_m2_y_m[i]], ms=10, color=:darkblue, marker=:circle, markerstrokewidth=2, label="Video m2")
+        scatter!([video_m1_x_m[i]], [video_m1_y_m[i]], ms=10, color=:blue, marker=:circle, markerstrokewidth=2, label="video m1")
+        scatter!([video_m2_x_m[i]], [video_m2_y_m[i]], ms=10, color=:darkblue, marker=:circle, markerstrokewidth=2, label="video m2")
 
         # Add trajectory trace for m2
         idx_start = max(1, i - 50)
