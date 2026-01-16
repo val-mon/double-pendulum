@@ -278,10 +278,10 @@ end
 
 
 """
-    estimate_masses(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds)
+    estimate_masses(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds, ω1_bounds, ω2_bounds)
 
 Estimate masses by minimizing the error between observed and simulated angles.
-Uses Nelder-Mead optimization on log-transformed masses.
+Uses Nelder-Mead optimization
 Compute RMSE (Root Mean Square Error) on θ1 and θ2
 
 # Arguments
@@ -292,24 +292,27 @@ Compute RMSE (Root Mean Square Error) on θ1 and θ2
 - `L2::Float64` : length of second rod [m]
 - `θ1_0::Float64` : initial angle of first pendulum [rad]
 - `θ2_0::Float64` : initial angle of second pendulum [rad]
-- `ω1_0::Float64` : initial angular velocity of first pendulum [rad/s] (default: 0.0)
-- `ω2_0::Float64` : initial angular velocity of second pendulum [rad/s] (default: 0.0)
 - `fit_duration::Float64` : duration of data to fit [s] (default: 2.0)
-- `m1_bounds::Tuple{Float64,Float64}` : mass bounds for m1 [kg] (default: 0.5g-50g)
-- `m2_bounds::Tuple{Float64,Float64}` : mass bounds for m2 [kg] (default: 0.5g-30g)
+- `m1_bounds::Tuple{Float64,Float64}` : mass bounds for m1 [kg]
+- `m2_bounds::Tuple{Float64,Float64}` : mass bounds for m2 [kg]
+- `ω1_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω1 [rad/s]
+- `ω2_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω2 [rad/s]
 
 # Returns
 - `m1::Float64` : estimated mass of first pendulum [kg]
 - `m2::Float64` : estimated mass of second pendulum [kg]
+- `ω1_0::Float64` : optimized angular velocity of first pendulum [rad/s]
+- `ω2_0::Float64` : optimized angular velocity of second pendulum [rad/s]
 - `fit_error::Float64` : mean squared error of the fit
 """
 function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt::Float64;
     L1::Float64, L2::Float64,
     θ1_0::Float64, θ2_0::Float64,
-    ω1_0::Float64=0.0, ω2_0::Float64=0.0,
     fit_duration::Float64=2.0,
-    m1_bounds::Tuple{Float64,Float64}=(0.5e-3, 50e-3),
-    m2_bounds::Tuple{Float64,Float64}=(0.5e-3, 30e-3)
+    m1_bounds::Tuple{Float64,Float64}=(0.5e-3, 120e-3),
+    m2_bounds::Tuple{Float64,Float64}=(0.5e-3, 50e-3),
+    ω1_bounds::Tuple{Float64,Float64}=(0.0, 5.0),
+    ω2_bounds::Tuple{Float64,Float64}=(0.0, 10.0)
 )
     n_fit = min(length(θ1_obs), Int(clamp(round(fit_duration/dt), 20, length(θ1_obs))))
 
@@ -318,6 +321,9 @@ function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
         # Uses log space to search
         m1 = exp(logm[1]); m2 = exp(logm[2])
         (m1 < m1_bounds[1] || m1 > m1_bounds[2] || m2 < m2_bounds[1] || m2 > m2_bounds[2]) && return Inf
+
+        ω1_0 = logm[3]; ω2_0 = logm[4]
+        (ω1_0 < ω1_bounds[1] || ω1_0 > ω1_bounds[2] || ω2_0 < ω2_bounds[1] || ω2_0 > ω2_bounds[2]) && return Inf
 
         # Simulate with this masses
         pendulum = create_initial_pendulum(θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, m1=m1, m2=m2, L1=L1, L2=L2)
@@ -345,15 +351,15 @@ function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
         return err / n_fit
     end
 
-    # Init near typical values for small masses
-    x0 = [log(30e-3), log(2e-3)]
-
-    # Optimisation: finds the masses that minimise the error
-    res = Optim.optimize(objective, x0, Optim.NelderMead(), Optim.Options(iterations=120, show_trace=false))
+    # Optimisation by minimizing the error
+    x0 = [log(20e-3), log(2e-3), 0.0, 0.5]
+    res = Optim.optimize(objective, x0, Optim.NelderMead(), Optim.Options(iterations=10_000, show_trace=false))
 
     m1 = exp(res.minimizer[1])
     m2 = exp(res.minimizer[2])
-    return m1, m2, res.minimum
+    ω1_0 = res.minimizer[3]
+    ω2_0 = res.minimizer[4]
+    return m1, m2, ω1_0, ω2_0, res.minimum
 end
 
 
@@ -427,11 +433,9 @@ function analyze_video(video_path::String;
 
     θ1_0 = θ1[1]
     θ2_0 = θ2[1]
-    ω1_0 = 0.0
-    ω2_0 = 0.0
 
-    # Estimate masses from video
-    m1, m2, err = estimate_masses(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, fit_duration=fit_duration)
+    # Estimate masses and velocities from video
+    m1, m2, ω1_0, ω2_0, err = estimate_masses(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, fit_duration=fit_duration)
 
     # Compute RMSE
     n_fit = min(length(θ1), Int(round(fit_duration/dt)))
@@ -455,8 +459,8 @@ function analyze_video(video_path::String;
     println("\n## Initials conditions")
     println("\tθ1_0 = $(round(rad2deg(θ1_0), digits=2))°")
     println("\tθ2_0 = $(round(rad2deg(θ2_0), digits=2))°")
-    println("\tω1_0 = 0.0 rad/s")
-    println("\tω2_0 = 0.0 rad/s")
+    println("\tω1_0 = $(round(ω1_0, digits=2)) rad/s")
+    println("\tω2_0 = $(round(ω2_0, digits=2)) rad/s")
 
     println("\n## Quality estimation")
     println("\tFit error     = $(round(err, sigdigits=4))")
