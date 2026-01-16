@@ -278,7 +278,7 @@ end
 
 
 """
-    estimate_masses(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds, ω1_bounds, ω2_bounds)
+    estimate_masses(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds, ω1_bounds, ω2_bounds, L1_bounds, L2_bounds)
 
 Estimate masses by minimizing the error between observed and simulated angles.
 Uses Nelder-Mead optimization
@@ -297,36 +297,45 @@ Compute RMSE (Root Mean Square Error) on θ1 and θ2
 - `m2_bounds::Tuple{Float64,Float64}` : mass bounds for m2 [kg]
 - `ω1_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω1 [rad/s]
 - `ω2_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω2 [rad/s]
+- `L1_bounds::Tuple{Float64,Float64}` : length bounds for L1 [m]
+- `L2_bounds::Tuple{Float64,Float64}` : length bounds for L2 [m]
 
 # Returns
 - `m1::Float64` : estimated mass of first pendulum [kg]
 - `m2::Float64` : estimated mass of second pendulum [kg]
 - `ω1_0::Float64` : optimized angular velocity of first pendulum [rad/s]
 - `ω2_0::Float64` : optimized angular velocity of second pendulum [rad/s]
+- `L1::Float64` : optimized length of first rod [m]
+- `L2::Float64` : optimized length of second rod [m]
 - `fit_error::Float64` : mean squared error of the fit
 """
-function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt::Float64;
+function estimate_params(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt::Float64;
     L1::Float64, L2::Float64,
     θ1_0::Float64, θ2_0::Float64,
     fit_duration::Float64=2.0,
     m1_bounds::Tuple{Float64,Float64}=(0.5e-3, 120e-3),
     m2_bounds::Tuple{Float64,Float64}=(0.5e-3, 50e-3),
     ω1_bounds::Tuple{Float64,Float64}=(0.0, 5.0),
-    ω2_bounds::Tuple{Float64,Float64}=(0.0, 10.0)
+    ω2_bounds::Tuple{Float64,Float64}=(0.0, 20.0),
+    L1_bounds::Tuple{Float64,Float64}=(0.9 * L1, 1.1 * L1),
+    L2_bounds::Tuple{Float64,Float64}=(0.9 * L2, 1.1 * L2)
 )
     n_fit = min(length(θ1_obs), Int(clamp(round(fit_duration/dt), 20, length(θ1_obs))))
 
     # Define the function to minimise
-    function objective(logm)
+    function objective(x)
         # Uses log space to search
-        m1 = exp(logm[1]); m2 = exp(logm[2])
+        m1 = x[1]; m2 = x[2]
         (m1 < m1_bounds[1] || m1 > m1_bounds[2] || m2 < m2_bounds[1] || m2 > m2_bounds[2]) && return Inf
 
-        ω1_0 = logm[3]; ω2_0 = logm[4]
+        L1_opt = x[3]; L2_opt = x[4]
+        (L1_opt < L1_bounds[1] || L1_opt > L1_bounds[2] || L2_opt < L2_bounds[1] || L2_opt > L2_bounds[2]) && return Inf
+
+        ω1_0 = x[5]; ω2_0 = x[6]
         (ω1_0 < ω1_bounds[1] || ω1_0 > ω1_bounds[2] || ω2_0 < ω2_bounds[1] || ω2_0 > ω2_bounds[2]) && return Inf
 
         # Simulate with this masses
-        pendulum = create_initial_pendulum(θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, m1=m1, m2=m2, L1=L1, L2=L2)
+        pendulum = create_initial_pendulum(θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, m1=m1, m2=m2, L1=L1_opt, L2=L2_opt)
         tspan = (0.0, (n_fit-1)*dt)
         prob  = ODEProblem(equations_of_motion, [θ1_0, θ2_0, ω1_0, ω2_0], tspan, pendulum)
         sol   = solve(prob, RK4(); dt=dt, adaptive=false, saveat=0:dt:(n_fit-1)*dt)
@@ -341,7 +350,8 @@ function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
 
         # Compare simulation vs observation
         err = 0.0
-        for i in 1:n_fit
+        start = Int(n_fit/2)
+        for i in start:n_fit
             d1 = wrapdiff(θ1_obs[i], θ1_sim[i])
             d2 = wrapdiff(θ2_obs[i], θ2_sim[i])
             err += d1*d1 + d2*d2
@@ -352,14 +362,16 @@ function estimate_masses(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
     end
 
     # Optimisation by minimizing the error
-    x0 = [log(20e-3), log(2e-3), 0.0, 0.5]
-    res = Optim.optimize(objective, x0, Optim.NelderMead(), Optim.Options(iterations=10_000, show_trace=false))
+    x0 = [20e-3, 2e-3, L1, L2, 0.0, 0.5]
+    res = Optim.optimize(objective, x0, Optim.ParticleSwarm(), Optim.Options(iterations=10_000, show_trace=false))
 
-    m1 = exp(res.minimizer[1])
-    m2 = exp(res.minimizer[2])
-    ω1_0 = res.minimizer[3]
-    ω2_0 = res.minimizer[4]
-    return m1, m2, ω1_0, ω2_0, res.minimum
+    m1 = res.minimizer[1]
+    m2 = res.minimizer[2]
+    L1_opt = res.minimizer[3]
+    L2_opt = res.minimizer[4]
+    ω1_0 = res.minimizer[5]
+    ω2_0 = res.minimizer[6]
+    return m1, m2, ω1_0, ω2_0, L1_opt, L2_opt, res.minimum
 end
 
 
@@ -367,12 +379,6 @@ end
     analyze_video(video_path; max_frames, area_min, L1_ref_m, fit_duration, debug, angle_offset)
 
 Analyze the video and extract all pendulum parameters.
-
-Assumptions:
-- ω1_0 = ω2_0 = 0 (released from rest)
-- L1 is measured from the video using a known reference length (default 91.74mm)
-- L2 is calculated from tracked positions
-- m1 and m2 are ESTIMATED by fitting simulation to observed angles
 
 # Arguments
 - `video_path::String` : path to video file
@@ -434,8 +440,8 @@ function analyze_video(video_path::String;
     θ1_0 = θ1[1]
     θ2_0 = θ2[1]
 
-    # Estimate masses and velocities from video
-    m1, m2, ω1_0, ω2_0, err = estimate_masses(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, fit_duration=fit_duration)
+    # Estimate params from video
+    m1, m2, ω1_0, ω2_0, L1, L2, err = estimate_params(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, fit_duration=fit_duration)
 
     # Compute RMSE
     n_fit = min(length(θ1), Int(round(fit_duration/dt)))
