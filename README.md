@@ -1,10 +1,11 @@
 # Double Pendulum Simulation
 A Julia simulation of a chaotic double pendulum system using Lagrangian mechanics and RK4 numerical integration.
 
-Initial parameters (angles, masses, lengths) are extracted from video analysis by tracking orange markers and fitting the simulation to observed motion.
+Initial parameters (angles, masses, velocities and lengths) are extracted from video analysis by tracking orange markers and fitting the simulation to observed motion.
 
 ## Project Structure
 ```
+│
 ├── bin/
 │   └── main.jl                 # entry point
 │
@@ -12,18 +13,18 @@ Initial parameters (angles, masses, lengths) are extracted from video analysis b
 │   ├── lagrange.pdf
 │   └── lagrange.tex
 │
-├── src/
-│   ├── Pendulum.jl             # main module
-│   ├── physics.jl              # physical constants
-│   ├── types.jl                # data structures
-│   ├── double_pendulum.jl      # simulation logic
-│   ├── video_analysis.jl       # video tracking & parameter extraction
-│   └── plot_manager.jl         # plot functions
+├── export/                     # generated plots/animations
 │
 ├── res/
 │   └── video.mp4               # video to analyse
 │
-└── export/                     # generated plots/animations
+└── src/
+    ├── Pendulum.jl             # main module
+    ├── physics.jl              # physical constants
+    ├── types.jl                # data structures
+    ├── double_pendulum.jl      # simulation logic
+    ├── video_analysis.jl       # video tracking & parameter extraction
+    └── plot_manager.jl         # plot functions
 ```
 
 ## Libraries
@@ -33,8 +34,8 @@ Initial parameters (angles, masses, lengths) are extracted from video analysis b
 - [DifferentialEquations.jl](https://diffeq.sciml.ai/) : ODE solver (RK4)
 
 ### Video Analysis
-- [OpenCV.jl](https://github.com/JuliaImages/OpenCV.jl) : video processing and marker detection
-- [Optim.jl](https://julianlsolvers.github.io/Optim.jl/) : mass estimation via optimization
+- [OpenCV.jl](https://github.com/JuliaImages/OpenCV.jl) : video processing
+- [Optim.jl](https://julianlsolvers.github.io/Optim.jl/) : params estimation
 - [Statistics.jl](https://docs.julialang.org/en/v1/stdlib/Statistics/) : statistical functions
 
 ### Development
