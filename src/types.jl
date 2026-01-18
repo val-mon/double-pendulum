@@ -34,3 +34,26 @@ mutable struct DoublePendulum
     time_history::Vector{Float64}
     energy_history::Vector{Float64}
 end
+
+struct VideoAnalysis
+    # initial conditions
+    θ1_0::Float64
+    θ2_0::Float64
+    ω1_0::Float64
+    ω2_0::Float64
+
+    # physical parameters
+    m1::Float64
+    m2::Float64
+    L1::Float64
+    L2::Float64
+
+    # tracked positions [pixels]
+    pivot_pos::Vector{Tuple{Float64,Float64}}
+    m1_pos::Vector{Tuple{Float64,Float64}}
+    m2_pos::Vector{Tuple{Float64,Float64}}
+
+    # video metadata
+    fps::Float64
+    px_to_m::Float64
+end

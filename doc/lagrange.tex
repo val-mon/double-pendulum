@@ -1,0 +1,266 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{physics}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{array}
+
+\geometry{margin=2.5cm}
+
+\title{\textbf{Double Pendule} \\ \large Approche Lagrangienne (Energies)}
+\author{Valentin Monod}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Configuration du Système}
+
+\subsection{Paramètres}
+
+\begin{itemize}[leftmargin=*]
+    \item Masse du premier pendule : $m_1$ [kg]
+    \item Masse du deuxième pendule : $m_2$ [kg]
+    \item Longueur de la première tige : $L_1$ [m]
+    \item Longueur de la deuxième tige : $L_2$ [m]
+    \item Accélération gravitationnelle : $g = 9{,}81$ [m/s²]
+\end{itemize}
+
+\subsection{Coordonnées Généralisées}
+
+\begin{itemize}[leftmargin=*]
+    \item $\theta_1$ : angle du premier pendule avec la verticale (positif dans le sens horaire)
+    \item $\theta_2$ : angle du deuxième pendule avec la verticale (positif dans le sens horaire)
+    \item $\Delta\theta = \theta_1 - \theta_2$ : angle relatif entre les deux tiges
+\end{itemize}
+
+\subsection{Conversion Angles $\rightarrow$ Positions Cartésiennes}
+
+Position de la masse $m_1$ :
+\begin{align}
+x_1 &= L_1 \sin(\theta_1) \\
+y_1 &= -L_1 \cos(\theta_1)
+\end{align}
+
+Position de la masse $m_2$ :
+\begin{align}
+x_2 &= L_1 \sin(\theta_1) + L_2 \sin(\theta_2) \\
+y_2 &= -L_1 \cos(\theta_1) - L_2 \cos(\theta_2)
+\end{align}
+
+\section{Vitesses}
+
+\subsection{Dérivées des Positions}
+
+Vitesse de $m_1$ :
+\begin{align}
+\dot{x}_1 &= L_1 \dot{\theta}_1 \cos(\theta_1) \\
+\dot{y}_1 &= L_1 \dot{\theta}_1 \sin(\theta_1)
+\end{align}
+
+Vitesse de $m_2$ :
+\begin{align}
+\dot{x}_2 &= L_1 \dot{\theta}_1 \cos(\theta_1) + L_2 \dot{\theta}_2 \cos(\theta_2) \\
+\dot{y}_2 &= L_1 \dot{\theta}_1 \sin(\theta_1) + L_2 \dot{\theta}_2 \sin(\theta_2)
+\end{align}
+
+\subsection{Normes des Vitesses}
+
+Vitesse au carré de $m_1$ :
+\begin{equation}
+v_1^2 = \dot{x}_1^2 + \dot{y}_1^2 = L_1^2 \dot{\theta}_1^2
+\end{equation}
+
+Vitesse au carré de $m_2$ :
+\begin{equation}
+v_2^2 = L_1^2 \dot{\theta}_1^2 + L_2^2 \dot{\theta}_2^2 + 2L_1L_2 \dot{\theta}_1\dot{\theta}_2 \cos(\Delta\theta)
+\end{equation}
+
+\section{Énergies}
+
+\subsection{Énergie Cinétique}
+
+Énergie cinétique de $m_1$ :
+\begin{equation}
+T_1 = \frac{1}{2}m_1 v_1^2 = \frac{1}{2}m_1 L_1^2 \dot{\theta}_1^2
+\end{equation}
+
+Énergie cinétique de $m_2$ :
+\begin{equation}
+T_2 = \frac{1}{2}m_2 v_2^2 = \frac{1}{2}m_2 \left[ L_1^2 \dot{\theta}_1^2 + L_2^2 \dot{\theta}_2^2 + 2L_1L_2 \dot{\theta}_1\dot{\theta}_2 \cos(\Delta\theta) \right]
+\end{equation}
+
+Énergie cinétique totale :
+\begin{equation}
+T = \frac{1}{2}(m_1 + m_2)L_1^2 \dot{\theta}_1^2 + \frac{1}{2}m_2 L_2^2 \dot{\theta}_2^2 + m_2 L_1 L_2 \dot{\theta}_1\dot{\theta}_2 \cos(\Delta\theta)
+\end{equation}
+
+\subsection{Énergie Potentielle}
+
+Référence : $y = 0$ au niveau du pivot (vers le bas est négatif).
+
+Énergie potentielle de $m_1$ :
+\begin{equation}
+V_1 = m_1 g y_1 = -m_1 g L_1 \cos(\theta_1)
+\end{equation}
+
+Énergie potentielle de $m_2$ :
+\begin{equation}
+V_2 = m_2 g y_2 = -m_2 g [L_1 \cos(\theta_1) + L_2 \cos(\theta_2)]
+\end{equation}
+
+Énergie potentielle totale :
+\begin{equation}
+V = -(m_1 + m_2)g L_1 \cos(\theta_1) - m_2 g L_2 \cos(\theta_2)
+\end{equation}
+
+\section{Lagrangien}
+
+Le Lagrangien est défini comme :
+\begin{equation}
+\mathcal{L} = T - V
+\end{equation}
+
+\begin{align}
+\mathcal{L}(\theta_1, \theta_2, \dot{\theta}_1, \dot{\theta}_2) = & \frac{1}{2}(m_1 + m_2)L_1^2 \dot{\theta}_1^2 + \frac{1}{2}m_2 L_2^2 \dot{\theta}_2^2 \nonumber \\
+& + m_2 L_1 L_2 \dot{\theta}_1 \dot{\theta}_2 \cos(\Delta\theta) \nonumber \\
+& + (m_1 + m_2)g L_1 \cos(\theta_1) + m_2 g L_2 \cos(\theta_2)
+\end{align}
+
+\section{Équations d'Euler-Lagrange}
+
+Les équations d'Euler-Lagrange donnent :
+\begin{equation}
+\frac{d}{dt}\left(\frac{\partial \mathcal{L}}{\partial \dot{\theta}_i}\right) - \frac{\partial \mathcal{L}}{\partial \theta_i} = 0, \quad i = 1, 2
+\end{equation}
+
+\subsection{Équation pour $\theta_1$}
+
+\begin{equation}
+(m_1 + m_2)L_1 \ddot{\theta}_1 + m_2 L_2 \ddot{\theta}_2 \cos(\Delta\theta) + m_2 L_2 \dot{\theta}_2^2 \sin(\Delta\theta) + (m_1 + m_2)g \sin(\theta_1) = 0
+\end{equation}
+
+\subsection{Équation pour $\theta_2$}
+
+\begin{equation}
+L_2 \ddot{\theta}_2 + L_1 \ddot{\theta}_1 \cos(\Delta\theta) - L_1 \dot{\theta}_1^2 \sin(\Delta\theta) + g \sin(\theta_2) = 0
+\end{equation}
+
+\section{Résolution pour les Accélérations}
+
+Système linéaire de 2 équations à 2 inconnues $(\ddot{\theta}_1, \ddot{\theta}_2)$ :
+\begin{equation}
+\begin{cases}
+(m_1 + m_2)L_1 \ddot{\theta}_1 + m_2 L_2 \cos(\Delta\theta) \ddot{\theta}_2 = -m_2 L_2 \dot{\theta}_2^2 \sin(\Delta\theta) - (m_1 + m_2)g \sin(\theta_1) \\
+L_1 \cos(\Delta\theta) \ddot{\theta}_1 + L_2 \ddot{\theta}_2 = L_1 \dot{\theta}_1^2 \sin(\Delta\theta) - g \sin(\theta_2)
+\end{cases}
+\end{equation}
+
+\subsection{Forme Matricielle}
+
+\begin{equation}
+\begin{bmatrix}
+(m_1 + m_2)L_1 & m_2 L_2 \cos(\Delta\theta) \\
+L_1 \cos(\Delta\theta) & L_2
+\end{bmatrix}
+\begin{bmatrix}
+\ddot{\theta}_1 \\
+\ddot{\theta}_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+-m_2 L_2 \dot{\theta}_2^2 \sin(\Delta\theta) - (m_1 + m_2)g \sin(\theta_1) \\
+L_1 \dot{\theta}_1^2 \sin(\Delta\theta) - g \sin(\theta_2)
+\end{bmatrix}
+\end{equation}
+
+\subsection{Déterminant}
+
+\begin{equation}
+\Delta = m_1 + m_2 \sin^2(\Delta\theta)
+\end{equation}
+
+\subsection{Solutions Explicites}
+
+Par la règle de Cramer :
+
+\subsubsection{Accélération angulaire 1 :}
+
+\begin{align}
+\ddot{\theta}_1 = \frac{1}{L_1\Delta} \Big[ & -m_2 L_1 \dot{\theta}_1^2 \sin(\Delta\theta) \cos(\Delta\theta) - m_2 L_2 \dot{\theta}_2^2 \sin(\Delta\theta) \nonumber \\
+& + m_2 g \sin(\theta_2) \cos(\Delta\theta) - (m_1 + m_2)g \sin(\theta_1) \Big]
+\end{align}
+
+\subsubsection{Accélération angulaire 2 :}
+
+\begin{align}
+\ddot{\theta}_2 = \frac{(m_1 + m_2)}{L_2\Delta} \Big[ & L_1 \dot{\theta}_1^2 \sin(\Delta\theta) + \frac{m_2}{m_1+m_2} L_2 \dot{\theta}_2^2 \sin(\Delta\theta) \cos(\Delta\theta) \nonumber \\
+& + g \sin(\theta_1) \cos(\Delta\theta) - g \sin(\theta_2) \Big]
+\end{align}
+
+\section{Formules Finales pour la Simulation}
+
+\subsection{Variables d'État}
+
+\begin{equation}
+\text{État}(t) = \begin{bmatrix}
+\theta_1(t) \\
+\theta_2(t) \\
+\omega_1(t) \\
+\omega_2(t)
+\end{bmatrix}
+\quad \text{où } \omega_1 = \dot{\theta}_1, \quad \omega_2 = \dot{\theta}_2
+\end{equation}
+
+\subsection{Équations Différentielles}
+
+\begin{align}
+\frac{d\theta_1}{dt} &= \omega_1 \\
+\frac{d\theta_2}{dt} &= \omega_2 \\
+\frac{d\omega_1}{dt} &= \ddot{\theta}_1(\theta_1, \theta_2, \omega_1, \omega_2) \\
+\frac{d\omega_2}{dt} &= \ddot{\theta}_2(\theta_1, \theta_2, \omega_1, \omega_2)
+\end{align}
+
+avec :
+\begin{equation}
+\Delta\theta = \theta_1 - \theta_2, \quad \Delta = m_1 + m_2 \sin^2(\Delta\theta)
+\end{equation}
+
+\begin{align}
+\ddot{\theta}_1 = \frac{1}{L_1\Delta} \Big[ & -m_2 L_1 \omega_1^2 \sin(\Delta\theta) \cos(\Delta\theta) - m_2 L_2 \omega_2^2 \sin(\Delta\theta) \nonumber \\
+& + m_2 g \sin(\theta_2) \cos(\Delta\theta) - (m_1 + m_2)g \sin(\theta_1) \Big]
+\end{align}
+
+\begin{align}
+\ddot{\theta}_2 = \frac{1}{L_2\Delta} \Big[ & (m_1+m_2) L_1 \omega_1^2 \sin(\Delta\theta) + m_2 L_2 \omega_2^2 \sin(\Delta\theta) \cos(\Delta\theta) \nonumber \\
+& + (m_1+m_2) g \sin(\theta_1) \cos(\Delta\theta) - (m_1+m_2) g \sin(\theta_2) \Big]
+\end{align}
+
+\section{Conservation de l'Énergie}
+
+L'énergie mécanique totale doit rester constante :
+\begin{equation}
+E_{\text{mec}} = T + V = \text{constante}
+\end{equation}
+
+\begin{align}
+E_{\text{mec}} = & \frac{1}{2}(m_1 + m_2)L_1^2 \omega_1^2 + \frac{1}{2}m_2 L_2^2 \omega_2^2 + m_2 L_1 L_2 \omega_1 \omega_2 \cos(\Delta\theta) \nonumber \\
+& - (m_1 + m_2)g L_1 \cos(\theta_1) - m_2 g L_2 \cos(\theta_2)
+\end{align}
+
+\section{Conversion pour la Visualisation}
+
+Pour afficher les positions cartésiennes :
+\begin{align}
+x_1 &= L_1 \sin(\theta_1) \\
+y_1 &= -L_1 \cos(\theta_1) \\
+x_2 &= L_1 \sin(\theta_1) + L_2 \sin(\theta_2) \\
+y_2 &= -L_1 \cos(\theta_1) - L_2 \cos(\theta_2)
+\end{align}
+
+\end{document}

@@ -252,8 +252,6 @@ function launch_simulation(;
     tmax=2.0,
     dt=0.001
 )
-    println("INFO : starting simulation\n")
-
     # define ODE (Ordinary Differential Equation) problem:
     #   - equations_of_motion : function f(du, u, p, t) that computes du/dt
     #   - initial_state : initial state vector u0
@@ -280,8 +278,14 @@ function launch_simulation(;
     # verify energy conservation
     E0 = pendulum.energy_history[1]
     ΔE_max = maximum(abs.(pendulum.energy_history .- E0)) / abs(E0) * 100
-    println("ΔE/E0 = $(ΔE_max) %")
-
-    println("\nINFO : simulation ended")
+    
+    # export simulation results to report file
+    open("export/report.txt", "a") do io
+        write(io, "="^60 * "\n")
+        write(io, "FINAL SIMULATION\n\n")
+        write(io, "ΔE/E0 = $(ΔE_max) %\n")
+        write(io, "="^60 * "\n")
+    end
+    
     return pendulum
 end
