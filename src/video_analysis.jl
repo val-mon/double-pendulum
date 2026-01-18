@@ -277,7 +277,7 @@ end
 
 
 """
-    estimate_params(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds)
+    estimate_params(θ1_obs, θ2_obs, dt; L1, L2, θ1_0, θ2_0, ω1_0, ω2_0, fit_duration, m1_bounds, m2_bounds, ω1_bounds, ω2_bounds, L1_bounds, L2_bounds)
 
 Estimate params by minimizing the error between observed and simulated angles.
 Uses Nelder-Mead optimization
@@ -298,12 +298,16 @@ Compute RMSE (Root Mean Square Error) on θ1 and θ2
 - `m2_bounds::Tuple{Float64,Float64}` : mass bounds for m2 [kg]
 - `ω1_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω1 [rad/s]
 - `ω2_bounds::Tuple{Float64,Float64}` : angular velocity bounds for ω2 [rad/s]
+- `L1_bounds::Tuple{Float64,Float64}` : length bounds for L1 [m]
+- `L2_bounds::Tuple{Float64,Float64}` : length bounds for L2 [m]
 
 # Returns
 - `m1::Float64` : estimated mass of first pendulum [kg]
 - `m2::Float64` : estimated mass of second pendulum [kg]
 - `ω1_0::Float64` : optimized angular velocity of first mass [rad/s]
 - `ω2_0::Float64` : optimized angular velocity of second mass [rad/s]
+- `L1::Float64` : optimized length of first rod [m]
+- `L2::Float64` : optimized length of second rod [m]
 - `fit_error::Float64` : mean squared error of the fit
 """
 function estimate_params(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt::Float64;
@@ -313,7 +317,9 @@ function estimate_params(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
     m1_bounds::Tuple{Float64,Float64}=(0.5e-3, 80e-3),
     m2_bounds::Tuple{Float64,Float64}=(0.5e-3, 30e-3),
     ω1_bounds::Tuple{Float64,Float64}=(0.0, 5.0),
-    ω2_bounds::Tuple{Float64,Float64}=(0.0, 10.0)
+    ω2_bounds::Tuple{Float64,Float64}=(0.0, 10.0),
+    L1_bounds::Tuple{Float64,Float64}=(0.9 * L1, 1.1 * L1),
+    L2_bounds::Tuple{Float64,Float64}=(0.9 * L2, 1.1 * L2)
 )
     n_fit = min(length(θ1_obs), Int(clamp(round(fit_duration/dt), 20, length(θ1_obs))))
 
@@ -328,8 +334,12 @@ function estimate_params(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
         ω2_0 = x[4]
         (ω1_0 < ω1_bounds[1] || ω1_0 > ω1_bounds[2] || ω2_0 < ω2_bounds[1] || ω2_0 > ω2_bounds[2]) && return Inf
 
+        L1_opt = exp(x[5])
+        L2_opt = exp(x[6])
+        (L1_opt < L1_bounds[1] || L1_opt > L1_bounds[2] || L2_opt < L2_bounds[1] || L2_opt > L2_bounds[2]) && return Inf
+
         # Simulate with this masses
-        pendulum = create_initial_pendulum(θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, m1=m1, m2=m2, L1=L1, L2=L2)
+        pendulum = create_initial_pendulum(θ1_0=θ1_0, θ2_0=θ2_0, ω1_0=ω1_0, ω2_0=ω2_0, m1=m1, m2=m2, L1=L1_opt, L2=L2_opt)
         tspan = (0.0, (n_fit-1)*dt)
         prob  = ODEProblem(equations_of_motion, [θ1_0, θ2_0, ω1_0, ω2_0], tspan, pendulum)
         sol   = solve(prob, RK4(); dt=dt, adaptive=false, saveat=0:dt:(n_fit-1)*dt)
@@ -355,12 +365,18 @@ function estimate_params(θ1_obs::Vector{Float64}, θ2_obs::Vector{Float64}, dt:
     end
 
     # Initials params
-    x0 = [log(20e-3), log(2e-3), 0.0, 0.5]
+    x0 = [log(20e-3), log(2e-3), 0.0, 0.5, log(L1), log(L2)]
 
     # Optimisation by minimizing the error
-    res = Optim.optimize(objective, x0, Optim.NelderMead(), Optim.Options(iterations=10_000, show_trace=false))
+    res = Optim.optimize(objective, x0, Optim.ParticleSwarm(), Optim.Options(iterations=10_000, show_trace=false))
 
-    return exp(res.minimizer[1]), exp(res.minimizer[2]), res.minimizer[3], res.minimizer[4], res.minimum
+    m1 = exp(res.minimizer[1])
+    m2 = exp(res.minimizer[2])
+    ω1_0 = res.minimizer[3]
+    ω2_0 = res.minimizer[4]
+    L1_opt = exp(res.minimizer[5])
+    L2_opt = exp(res.minimizer[6])
+    return m1, m2, ω1_0, ω2_0, L1_opt, L2_opt, res.minimum
 end
 
 
@@ -433,7 +449,7 @@ function analyze_video(video_path::String;
     θ2_0 = θ2[1]
 
     # Estimate masses and velocities from video
-    m1, m2, ω1_0, ω2_0, err = estimate_params(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, fit_duration=fit_duration)
+    m1, m2, ω1_0, ω2_0, L1, L2, err = estimate_params(θ1, θ2, dt; L1=L1, L2=L2, θ1_0=θ1_0, θ2_0=θ2_0, fit_duration=fit_duration)
 
     # Compute RMSE
     n_fit = min(length(θ1), Int(round(fit_duration/dt)))
