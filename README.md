@@ -1,4 +1,4 @@
-# Double Pendulum Simulation
+# Double Pendulum
 A Julia simulation of a chaotic double pendulum system using Lagrangian mechanics and RK4 numerical integration.
 
 Initial parameters (angles, masses, velocities and lengths) are extracted from video analysis by tracking orange markers and fitting the simulation to observed motion.
@@ -31,7 +31,7 @@ Initial parameters (angles, masses, velocities and lengths) are extracted from v
 
 ### Simulation
 - [Plots.jl](https://docs.juliaplots.org/stable/) : visualization and animations
-- [DifferentialEquations.jl](https://diffeq.sciml.ai/) : ODE solver (RK4)
+- [DifferentialEquations.jl](https://diffeq.sciml.ai/) : ODE solver
 
 ### Video Analysis
 - [OpenCV.jl](https://github.com/JuliaImages/OpenCV.jl) : video processing

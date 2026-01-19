@@ -30,11 +30,11 @@ function plot_pendulum(pendulum::DoublePendulum)
         x1, y1 = pendulum.join1.position_x[i], pendulum.join1.position_y[i]
         x2, y2 = pendulum.join2.position_x[i], pendulum.join2.position_y[i]
 
-        # rods
+        # Rods
         plot!([0, x1], [0, y1], lw=2, color=:blue)
         plot!([x1, x2], [y1, y2], lw=2, color=:red)
 
-        # masses
+        # Masses
         scatter!([0], [0], ms=10, color=:black)
         scatter!([x1], [y1], ms=10, color=:blue)
         scatter!([x2], [y2], ms=10, color=:red)
@@ -149,7 +149,7 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
             # Linear interpolation between idx-1 and idx
             t1 = pendulum.time_history[idx-1]
             t2 = pendulum.time_history[idx]
-            factor = (t - t1) / (t2 - t1)  # interpolation factor
+            factor = (t - t1) / (t2 - t1)  # Interpolation factor
 
             push!(sim_m1_x_m, (1-factor) * pendulum.join1.position_x[idx-1] + factor * pendulum.join1.position_x[idx])
             push!(sim_m1_y_m, (1-factor) * pendulum.join1.position_y[idx-1] + factor * pendulum.join1.position_y[idx])
@@ -179,8 +179,6 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
     L_total = pendulum.join1.length + pendulum.join2.length
     anim = @animate for i in 1:n_video
         t = time_video[i]
-
-        # Create plot
         plot(
             xlim=(-L_total * 1.2, L_total * 1.2),
             ylim=(-L_total * 1.2, L_total * 1.2),
