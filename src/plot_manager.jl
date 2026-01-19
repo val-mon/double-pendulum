@@ -23,7 +23,7 @@ function plot_pendulum(pendulum::DoublePendulum)
             aspect_ratio=:equal,
             legend=false,
             title="\n\nt [s] : $(round(pendulum.time_history[i], digits=2))",
-            margin = 10Plots.mm,
+            margin=10Plots.mm,
             size=(1200, 1200)
         )
 
@@ -69,7 +69,7 @@ function plot_stats(pendulum::DoublePendulum)
     p3 = plot(pendulum.join2.position_x .* 1000, pendulum.join2.position_y .* 1000, color=:red, xlabel="x [mm]", ylabel="y [mm]", title="m2 trajectory", legend=false)
     p4 = plot(time, (pendulum.energy_history .- E0) ./ abs(E0) .* 100, color=:green, xlabel="t [s]", ylabel="ΔE/E0 [%]", title="energy conservation", legend=false, ylim=(-0.0001, 0.0001))
 
-    graph = plot(p1, p2, p3, p4, layout=(2, 2), size=(1200, 1200), margin = 10Plots.mm)
+    graph = plot(p1, p2, p3, p4, layout=(2, 2), size=(1200, 1200), margin=10Plots.mm)
 
     savefig(graph, "export/stats.svg")
     display(graph)
@@ -121,7 +121,7 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
     video_m2_y_m = [-(m2_pos[i][2] - pivot[2]) * px_to_m for i in 1:n_video]
 
     # Time array for video
-    time_video = [(i-1) * dt for i in 1:n_video]
+    time_video = [(i - 1) * dt for i in 1:n_video]
 
     # Sample simulation at video timestamps (linear interpolation)
     sim_m1_x_m = Float64[]
@@ -151,27 +151,27 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
             t2 = pendulum.time_history[idx]
             factor = (t - t1) / (t2 - t1)  # Interpolation factor
 
-            push!(sim_m1_x_m, (1-factor) * pendulum.join1.position_x[idx-1] + factor * pendulum.join1.position_x[idx])
-            push!(sim_m1_y_m, (1-factor) * pendulum.join1.position_y[idx-1] + factor * pendulum.join1.position_y[idx])
-            push!(sim_m2_x_m, (1-factor) * pendulum.join2.position_x[idx-1] + factor * pendulum.join2.position_x[idx])
-            push!(sim_m2_y_m, (1-factor) * pendulum.join2.position_y[idx-1] + factor * pendulum.join2.position_y[idx])
+            push!(sim_m1_x_m, (1 - factor) * pendulum.join1.position_x[idx-1] + factor * pendulum.join1.position_x[idx])
+            push!(sim_m1_y_m, (1 - factor) * pendulum.join1.position_y[idx-1] + factor * pendulum.join1.position_y[idx])
+            push!(sim_m2_x_m, (1 - factor) * pendulum.join2.position_x[idx-1] + factor * pendulum.join2.position_x[idx])
+            push!(sim_m2_y_m, (1 - factor) * pendulum.join2.position_y[idx-1] + factor * pendulum.join2.position_y[idx])
         end
     end
 
     # Generate position comparison plots
-    p1 = plot(time_video, video_m1_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="\n\nm1 - x position")
+    p1 = plot(time_video, video_m1_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue, xlabel="t [s]", ylabel="pos [mm]", title="\n\nm1 - x position")
     plot!(p1, time_video, sim_m1_x_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p2 = plot(time_video, video_m1_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="\n\nm1 - y position")
+    p2 = plot(time_video, video_m1_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue, xlabel="t [s]", ylabel="pos [mm]", title="\n\nm1 - y position")
     plot!(p2, time_video, sim_m1_y_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p3 = plot(time_video, video_m2_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m2 - x position")
+    p3 = plot(time_video, video_m2_x_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue, xlabel="t [s]", ylabel="pos [mm]", title="m2 - x position")
     plot!(p3, time_video, sim_m2_x_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    p4 = plot(time_video, video_m2_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue,xlabel="t [s]", ylabel="pos [mm]", title="m2 - y position")
+    p4 = plot(time_video, video_m2_y_m .* 1000, label="video", linewidth=2, linestyle=:solid, color=:blue, xlabel="t [s]", ylabel="pos [mm]", title="m2 - y position")
     plot!(p4, time_video, sim_m2_y_m .* 1000, label="simu", linewidth=2, linestyle=:dash, color=:red)
 
-    combined_plot = plot(p1, p2, p3, p4, layout=(2,2), size=(1200, 1200), margin = 10Plots.mm, plot_title="\n\nvideo vs simulation")
+    combined_plot = plot(p1, p2, p3, p4, layout=(2, 2), size=(1200, 1200), margin=10Plots.mm, plot_title="\n\nvideo vs simulation")
     savefig(combined_plot, "export/comparison.svg")
     display(combined_plot)
 
@@ -188,14 +188,14 @@ function plot_comparison(video_analysis::VideoAnalysis, pendulum::DoublePendulum
             title="\n\nt [s] : $(round(t, digits=2))",
             legend=:topright,
             dpi=100,
-            size=(1920,1080),
-            margin = 10Plots.mm
+            size=(1920, 1080),
+            margin=10Plots.mm
         )
 
         # Draw simulation pendulum (red)
         plot!([0, sim_m1_x_m[i]], [0, sim_m1_y_m[i]], lw=3, color=:red, label="", alpha=0.8)
         plot!([sim_m1_x_m[i], sim_m2_x_m[i]], [sim_m1_y_m[i], sim_m2_y_m[i]], lw=3, color=:darkred, label="", alpha=0.8)
-        scatter!([0], [0], ms=12, color=:black, label = false)
+        scatter!([0], [0], ms=12, color=:black, label=false)
         scatter!([sim_m1_x_m[i]], [sim_m1_y_m[i]], ms=12, color=:red, label="simu m1")
         scatter!([sim_m2_x_m[i]], [sim_m2_y_m[i]], ms=12, color=:darkred, label="simu m2")
 
@@ -221,8 +221,12 @@ Run all ploting functions
 - `video_analysis::VideoAnalysis` : video analysis results with tracked positions
 - `pendulum::DoublePendulum` : simulation results to compare against
 """
-function plot_results(video_analysis::VideoAnalysis, pendulum::DoublePendulum)
-    plot_stats(pendulum)
-    plot_pendulum(pendulum)
-    plot_comparison(video_analysis, pendulum)
+function plot_results(video_analysis::VideoAnalysis, pendulum::DoublePendulum;
+    stats::Bool=true,
+    pdl::Bool=true,
+    comp::Bool=true
+)
+    stats && plot_stats(pendulum)
+    pdl && plot_pendulum(pendulum)
+    comp && plot_comparison(video_analysis, pendulum)
 end
